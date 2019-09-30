@@ -1,0 +1,16 @@
+body {
+    margin: 0;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.footer-container-box {
+    padding-top: 10px;
+    background-color: #f1f3f4;
+    height: 12vh;
+    text-align: center;
+    color: black;
+}
