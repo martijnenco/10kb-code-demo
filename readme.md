@@ -1,9 +1,9 @@
-#10KB code assement
-###install
+# 10KB code assement
+### install
 ```bash
 npm install
 ```
-###run
+### run
 In one terminal run:
 ```bash
 npm start
