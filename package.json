@@ -24,7 +24,7 @@
     "babel-preset-react": "^6.24.1",
     "css-loader": "^0.28.11",
     "graphql": "^14.5.8",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "react": "^16.3.2",
     "react-apollo": "^3.1.1",
     "react-dom": "^16.3.2",
