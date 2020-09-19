@@ -1,135 +1,99 @@
 import React from 'react';
-import EnhancedTable from "./Table";
-import ApolloClient from 'apollo-boost';
-import {gql} from 'apollo-boost';
-import TextField from "@material-ui/core/TextField";
-import FormControl from "@material-ui/core/FormControl";
-import InputLabel from "@material-ui/core/InputLabel";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
-
-const client = new ApolloClient({
-  uri: 'http://localhost:4000/',
-});
+import Calculator from "../calculator";
+import LineChart from "recharts/lib/chart/LineChart";
+import XAxis from "recharts/lib/cartesian/XAxis";
+import YAxis from "recharts/lib/cartesian/YAxis";
+import CartesianGrid from "recharts/lib/cartesian/CartesianGrid";
+import Tooltip from "recharts/lib/component/Tooltip";
+import Legend from "recharts/lib/component/Legend";
+import Line from "recharts/lib/cartesian/Line";
 
 class HomePage extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      input: {
-        nameIs: '',
-        nameLike: '',
-        typeIn: '',
-        amountGte: '',
-        amountLte: ''
-      },
-      loading: null,
-      error: null,
-      data: {}
-    }
-  }
+    let goldPrices = require('../resources/dataGoldPrices');
 
-  loadQuery(nextState) {
-    client.query({
-      query: gql`
-          query documentDetails(
-              $nameIs: String,
-              $nameLike:String,
-              $typeIn:Type,
-              $amountGte:Int,
-              $amountLte:Int
-          ) {
-              documents(
-                  nameIs: $nameIs,
-                  nameLike: $nameLike
-                  typeIn: $typeIn
-                  amountGte: $amountGte
-                  amountLte: $amountLte
-              ) {
-                  id
-                  name
-                  type
-                  amount
-              }
-          }
-      `,
-      variables: {
-        nameIs: nextState && nextState.input && nextState.input.nameIs || '',
-        nameLike: nextState && nextState.input && nextState.input.nameLike || '',
-        typeIn: nextState && nextState.input && nextState.input.typeIn || undefined,
-        amountGte: nextState && nextState.input && parseInt(nextState.input.amountGte) || null,
-        amountLte: nextState && nextState.input && parseInt(nextState.input.amountLte) || null
+    goldPrices = goldPrices.map(item => {
+      return {
+        value: item.value,
+        time: new Date(item.time).getTime() / 1000,
       }
-    })
-    .then(response => this.setState(response));
+    });
+
+    const calculator = new Calculator({
+      resource: goldPrices,
+      method: 1
+    });
+
+    this.state = {
+      calculator,
+    };
   }
 
-  componentDidMount() {
-    this.loadQuery()
-  }
-
-  componentWillUpdate(nextProps, nextState, nextContext) {
-    if (nextState.input !== this.state.input) {
-      this.loadQuery(nextState)
-    }
+  getRandomColor() {
+    return `#${Math.floor(Math.random() * 0x1000000).toString(16).padStart(6, 0)}`
   }
 
   render() {
     return (
-      <React.Fragment>
-        <div style={{margin: '20px 50px', display: 'table'}}>
-          <TextField style={{display: "table-cell", margin: '5px'}}
-                     id="standard-name"
-                     label="Name is"
-                     value={this.state.input.nameIs}
-                     onChange={(e) => this.setState({input: {...this.state.input, nameIs: e.target.value}})}
-                     margin="normal"
-          />
+      <div>
+        {/*<pre>{JSON.stringify(this.state.calculator, null, 2)}</pre>*/}
 
-          <TextField style={{display: "table-cell", margin: '5px'}}
-                     id="standard-name"
-                     label="Name consists"
-                     value={this.state.input.nameLike}
-                     onChange={(e) => this.setState({input: {...this.state.input, nameLike: e.target.value}})}
-                     margin="normal"
-          />
+        <div>
+          <p>Analytic:</p>
+          <LineChart width={900} height={250}>
+            <XAxis dataKey="time" type={'number'}/>
+            <YAxis dataKey="value"/>
+            <CartesianGrid strokeDasharray="1 1"/>
+            <Tooltip/>
+            <Legend/>
+            <Line dataKey="value" data={this.state.calculator.resource} name={"goldPrices"} key={"goldPrices"}
+                  stroke={this.getRandomColor()}/>
+            {this.state.calculator.analytics.map(s => (
+              <Line dataKey="value" data={s.computedData} name={s.type} key={s.type} stroke={this.getRandomColor()}/>
+            ))}
+          </LineChart>
+          <LineChart width={900} height={250}>
+            <XAxis dataKey="time" type={'number'}/>
+            <YAxis dataKey="trend"/>
+            <CartesianGrid strokeDasharray="1 1"/>
+            <Tooltip/>
+            <Legend/>
+            {this.state.calculator.analytics.map(s => (
+              <Line dataKey="trend" data={s.computedData} name={s.type} key={s.type} stroke={this.getRandomColor()}/>
+            ))}
+            {this.state.calculator.analyticsSerializer.map(s => (
+              <Line dataKey="trend" data={s.computedData} name={s.type} key={s.type} stroke={this.getRandomColor()}/>
+            ))}
+          </LineChart>
 
-          <FormControl style={{minWidth: 120, display: "table-cell", margin: '5px'}}>
-            <InputLabel htmlFor="age-helper">Type</InputLabel>
-            <Select
-              value={this.state.input.typeIn}
-              onChange={(e) => this.setState({input: {...this.state.input, typeIn: e.target.value}})}
-            >
-              <MenuItem value={''}>
-                <em>None</em>
-              </MenuItem>
-              <MenuItem value={"invoice"}>Invoice</MenuItem>
-              <MenuItem value={"offer"}>Offer</MenuItem>
-              <MenuItem value={"other"}>Other</MenuItem>
-            </Select>
-          </FormControl>
+          <p>Effect:</p>
+          <LineChart width={900} height={250}>
+            <XAxis dataKey="time" type={'number'}/>
+            <YAxis />
+            <CartesianGrid strokeDasharray="1 1"/>
+            <Tooltip/>
+            <Legend/>
+            {this.state.calculator.effects.map(s => (
+              <Line dataKey="value" data={s.computedData} name={s.type} key={s.type} stroke={this.getRandomColor()}/>
+            ))}
+          </LineChart>
 
-          <TextField style={{minWidth: 230, display: "table-cell", margin: '5px'}}
-                     id="standard-name"
-                     label="Amount greater than or equal"
-                     value={this.state.input.amountGte}
-                     onChange={(e) => this.setState({input: {...this.state.input, amountGte: e.target.value}})}
-                     margin="normal"
-                     type={'number'}
-          />
-
-          <TextField style={{minWidth: 230, display: "table-cell", margin: '5px'}}
-                     id="standard-name"
-                     label="Amount less than or equal"
-                     value={this.state.input.amountLte}
-                     onChange={(e) => this.setState({input: {...this.state.input, amountLte: e.target.value}})}
-                     margin="normal"
-                     type={'number'}
-          />
+          <p>Result:</p>
+          <LineChart width={900} height={250}>
+            <XAxis dataKey="time" type={'number'}/>
+            <YAxis />
+            <CartesianGrid strokeDasharray="1 1"/>
+            <Tooltip/>
+            <Legend/>
+            <Line dataKey="value" data={this.state.calculator.resource} name={"goldPrices"} key={"goldPrices"}
+                  stroke={this.getRandomColor()}/>
+            {this.state.calculator.results.map(s => (
+              <Line dataKey="value" data={s.computedData} name={s.type} key={s.type} stroke={this.getRandomColor()}/>
+            ))}
+          </LineChart>
         </div>
-
-        <EnhancedTable data={this.state}/>
-      </React.Fragment>
+      </div>
     );
   }
 }
